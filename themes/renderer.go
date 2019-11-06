@@ -32,5 +32,6 @@ func (r *Renderer) getTemplateHelpers() template.FuncMap {
 		"inline":       helperInline,
 		"markdown":     helperMarkdown,
 		"slugify":      helperSlugify,
+		"requestId":    helperRequestId,
 	}
 }
