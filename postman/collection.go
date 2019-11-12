@@ -8,28 +8,23 @@ type Collection struct {
 	Structures  []StructureDefinition
 }
 
-type Request struct {
-	ID            string
-	Name          string
-	Description   string
+type OriginalRequest struct {
 	Method        string
 	URL           string
 	PayloadType   string
 	PayloadRaw    string
 	PayloadParams []KeyValuePair
-	PathVariables []KeyValuePair
 	Headers       []KeyValuePair
-	Responses     []Response
-	Tests         string
 }
 
-type OriginalRequest struct {
-	Method string
-	URL string
-	PayloadType   string
-	PayloadRaw    string
-	PayloadParams []KeyValuePair
-	Headers       []KeyValuePair
+type Request struct {
+	OriginalRequest
+	ID            string
+	Name          string
+	Description   string
+	PathVariables []KeyValuePair
+	Responses     []Response
+	Tests         string
 }
 
 type Response struct {

@@ -67,17 +67,19 @@ func (p *CollectionV210Parser) computeItem(parentFolder *Folder, items []collect
 			parentFolder.Folders = append(parentFolder.Folders, folder)
 		} else { // item is a request
 			request := Request{
+				OriginalRequest: OriginalRequest {
+					Method:        item.Request.Method,
+					URL:           item.Request.Url.Raw,
+					PayloadType:   item.Request.Body.Mode,
+					PayloadRaw:    item.Request.Body.Raw,
+					PayloadParams: p.parseRequestPayloadParams(*item.Request),
+					Headers:       p.parseRequestHeaders(item.Request.Header, options),
+				},
 				ID:            uuid.NewV4().String(),
 				Name:          item.Name,
 				Description:   item.Request.Description,
-				Method:        item.Request.Method,
-				URL:           item.Request.Url.Raw,
-				PayloadType:   item.Request.Body.Mode,
-				PayloadRaw:    item.Request.Body.Raw,
 				Tests:         p.parseRequestTests(item),
 				PathVariables: p.parseRequestPathVariables(item),
-				PayloadParams: p.parseRequestPayloadParams(*item.Request),
-				Headers:       p.parseRequestHeaders(item.Request.Header, options),
 				Responses:     p.parseRequestResponses(item.Response, options),
 			}
 			parentFolder.Requests = append(parentFolder.Requests, request)
@@ -157,12 +159,12 @@ func (p *CollectionV210Parser) parseRequestResponses(responses []collectionV210R
 
 	for _, resp := range responses {
 		parsedResponses = append(parsedResponses, Response{
-			ID:         uuid.NewV4().String(),
-			Name:       resp.Name,
-			Body:       resp.Body,
-			Status:     resp.Status,
-			StatusCode: resp.Code,
-			Headers:    p.parseResponseHeaders(resp.Header, options),
+			ID:              uuid.NewV4().String(),
+			Name:            resp.Name,
+			Body:            resp.Body,
+			Status:          resp.Status,
+			StatusCode:      resp.Code,
+			Headers:         p.parseResponseHeaders(resp.Header, options),
 			OriginalRequest: p.parseOriginalRequest(resp.OriginalRequest, options),
 		})
 	}

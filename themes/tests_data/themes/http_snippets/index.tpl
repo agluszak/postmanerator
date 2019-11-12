@@ -1,9 +1,9 @@
 {{ range .Requests }}
-{{ httpSnippet . }}
+{{ httpSnippet .OriginalRequest }}
 {{ end }}
 
 {{ range .Folders }}
 {{ range .Requests }}
-{{ httpSnippet . }}
+{{ httpSnippet .OriginalRequest }}
 {{ end }}
 {{ end }}
