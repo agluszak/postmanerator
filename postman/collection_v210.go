@@ -9,33 +9,38 @@ type collectionV210 struct {
 	Item []collectionV210Item `json:"item"`
 }
 
+type collectionV210Request struct {
+	Method string                       `json:"method"`
+	Header []collectionV210KeyValuePair `json:"header"`
+	Body   struct {
+		Mode       string                       `json:"mode"`
+		Raw        string                       `json:"raw"`
+		FormData   []collectionV210KeyValuePair `json:"formdata,omitempty"`
+		UrlEncoded []collectionV210KeyValuePair `json:"urlencoded,omitempty"`
+	} `json:"body"`
+	Url struct {
+		Raw      string                       `json:"raw"`
+		Variable []collectionV210KeyValuePair `json:"variable"`
+	} `json:"url"`
+	Description string `json:"description"`
+}
+
+type collectionV210Response struct {
+	Name            string                       `json:"name"`
+	Status          string                       `json:"status"`
+	Code            int                          `json:"code"`
+	Header          []collectionV210KeyValuePair `json:"header"`
+	Body            string                       `json:"body"`
+	OriginalRequest *collectionV210Request       `json:"originalRequest"`
+}
+
 type collectionV210Item struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Event       []collectionV210Event `json:"event"`
-	Item        []collectionV210Item  `json:"item"`
-	Request     *struct {
-		Method string                       `json:"method"`
-		Header []collectionV210KeyValuePair `json:"header"`
-		Body   struct {
-			Mode       string                       `json:"mode"`
-			Raw        string                       `json:"raw"`
-			FormData   []collectionV210KeyValuePair `json:"formdata,omitempty"`
-			UrlEncoded []collectionV210KeyValuePair `json:"urlencoded,omitempty"`
-		} `json:"body"`
-		Url struct {
-			Raw      string                       `json:"raw"`
-			Variable []collectionV210KeyValuePair `json:"variable"`
-		} `json:"url"`
-		Description string `json:"description"`
-	} `json:"request,omitempty"`
-	Response []struct {
-		Name   string                       `json:"name"`
-		Status string                       `json:"status"`
-		Code   int                          `json:"code"`
-		Header []collectionV210KeyValuePair `json:"header"`
-		Body   string                       `json:"body"`
-	} `json:"response"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	Event       []collectionV210Event  `json:"event"`
+	Item        []collectionV210Item   `json:"item"`
+	Request     *collectionV210Request `json:"request,omitempty"`
+	Response    []collectionV210Response `json:"response"`
 }
 
 type collectionV210Event struct {

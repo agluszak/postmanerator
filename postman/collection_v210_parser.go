@@ -42,6 +42,17 @@ func (p *CollectionV210Parser) buildCollection(src collectionV210, options Build
 	return collection, nil
 }
 
+func (p *CollectionV210Parser) parseOriginalRequest(request *collectionV210Request, options BuilderOptions) OriginalRequest {
+	return OriginalRequest{
+		Method:        request.Method,
+		URL:           request.Url.Raw,
+		PayloadType:   request.Body.Mode,
+		PayloadRaw:    request.Body.Raw,
+		PayloadParams: p.parseRequestPayloadParams(*request),
+		Headers:       p.parseRequestHeaders(request.Header, options),
+	}
+}
+
 func (p *CollectionV210Parser) computeItem(parentFolder *Folder, items []collectionV210Item, options BuilderOptions) error {
 	for _, item := range items {
 		if item.Request == nil { // item is a folder
@@ -65,9 +76,9 @@ func (p *CollectionV210Parser) computeItem(parentFolder *Folder, items []collect
 				PayloadRaw:    item.Request.Body.Raw,
 				Tests:         p.parseRequestTests(item),
 				PathVariables: p.parseRequestPathVariables(item),
-				PayloadParams: p.parseRequestPayloadParams(item),
-				Headers:       p.parseRequestHeaders(item, options),
-				Responses:     p.parseRequestResponses(item, options),
+				PayloadParams: p.parseRequestPayloadParams(*item.Request),
+				Headers:       p.parseRequestHeaders(item.Request.Header, options),
+				Responses:     p.parseRequestResponses(item.Response, options),
 			}
 			parentFolder.Requests = append(parentFolder.Requests, request)
 		}
@@ -100,15 +111,15 @@ func (p *CollectionV210Parser) parseRequestPathVariables(item collectionV210Item
 	return pathVariables
 }
 
-func (p *CollectionV210Parser) parseRequestPayloadParams(item collectionV210Item) []KeyValuePair {
+func (p *CollectionV210Parser) parseRequestPayloadParams(request collectionV210Request) []KeyValuePair {
 	payloadParams := make([]KeyValuePair, 0)
 
 	keyValuePairCollection := make([]collectionV210KeyValuePair, 0)
-	switch item.Request.Body.Mode {
+	switch request.Body.Mode {
 	case "urlencoded":
-		keyValuePairCollection = item.Request.Body.UrlEncoded
+		keyValuePairCollection = request.Body.UrlEncoded
 	case "formdata":
-		keyValuePairCollection = item.Request.Body.FormData
+		keyValuePairCollection = request.Body.FormData
 	}
 
 	for _, pair := range keyValuePairCollection {
@@ -123,14 +134,14 @@ func (p *CollectionV210Parser) parseRequestPayloadParams(item collectionV210Item
 	return payloadParams
 }
 
-func (p *CollectionV210Parser) parseRequestHeaders(item collectionV210Item, options BuilderOptions) []KeyValuePair {
-	headers := make([]KeyValuePair, 0)
+func (p *CollectionV210Parser) parseRequestHeaders(headers []collectionV210KeyValuePair, options BuilderOptions) []KeyValuePair {
+	parsedHeaders := make([]KeyValuePair, 0)
 
-	for _, header := range item.Request.Header {
+	for _, header := range headers {
 		if containsString(options.IgnoredRequestHeaders, header.Key) {
 			continue
 		}
-		headers = append(headers, KeyValuePair{
+		parsedHeaders = append(parsedHeaders, KeyValuePair{
 			Name:        header.Key,
 			Key:         header.Key,
 			Value:       header.Value,
@@ -138,24 +149,25 @@ func (p *CollectionV210Parser) parseRequestHeaders(item collectionV210Item, opti
 		})
 	}
 
-	return headers
+	return parsedHeaders
 }
 
-func (p *CollectionV210Parser) parseRequestResponses(item collectionV210Item, options BuilderOptions) []Response {
-	responses := make([]Response, 0)
+func (p *CollectionV210Parser) parseRequestResponses(responses []collectionV210Response, options BuilderOptions) []Response {
+	parsedResponses := make([]Response, 0)
 
-	for _, resp := range item.Response {
-		responses = append(responses, Response{
+	for _, resp := range responses {
+		parsedResponses = append(parsedResponses, Response{
 			ID:         uuid.NewV4().String(),
 			Name:       resp.Name,
 			Body:       resp.Body,
 			Status:     resp.Status,
 			StatusCode: resp.Code,
 			Headers:    p.parseResponseHeaders(resp.Header, options),
+			OriginalRequest: p.parseOriginalRequest(resp.OriginalRequest, options),
 		})
 	}
 
-	return responses
+	return parsedResponses
 }
 
 func (p *CollectionV210Parser) parseResponseHeaders(headers []collectionV210KeyValuePair, options BuilderOptions) []KeyValuePair {

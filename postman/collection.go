@@ -23,13 +23,23 @@ type Request struct {
 	Tests         string
 }
 
+type OriginalRequest struct {
+	Method string
+	URL string
+	PayloadType   string
+	PayloadRaw    string
+	PayloadParams []KeyValuePair
+	Headers       []KeyValuePair
+}
+
 type Response struct {
-	ID         string
-	Name       string
-	Status     string
-	StatusCode int
-	Body       string
-	Headers    []KeyValuePair
+	ID              string
+	Name            string
+	Status          string
+	StatusCode      int
+	Body            string
+	Headers         []KeyValuePair
+	OriginalRequest OriginalRequest
 }
 
 type Folder struct {

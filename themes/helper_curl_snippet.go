@@ -8,7 +8,7 @@ import (
 	"github.com/aubm/postmanerator/postman"
 )
 
-func curlSnippet(request postman.Request) string {
+func curlSnippet(request postman.OriginalRequest) string {
 	var curlSnippet string
 	payloadReady, _ := regexp.Compile("POST|PUT|PATCH|DELETE")
 	curlSnippet += fmt.Sprintf("curl -X %v", request.Method)

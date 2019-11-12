@@ -2,8 +2,9 @@ package themes
 
 import (
 	"github.com/aubm/postmanerator/postman"
+	"strings"
 )
 
 func helperRequestId(request postman.Request) string {
-	return request.Method + helperSlugify(request.Name)
+	return strings.ToLower(request.Method) + "-" + helperSlugify(request.Name)
 }

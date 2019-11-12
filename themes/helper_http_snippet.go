@@ -9,7 +9,7 @@ import (
 	"github.com/aubm/postmanerator/postman"
 )
 
-func helperHttpSnippet(request postman.Request) (httpSnippet string) {
+func helperHttpSnippet(request postman.OriginalRequest) (httpSnippet string) {
 	parsedURL, err := parsedURL(request.URL)
 	if err != nil {
 		httpSnippet = err.Error()
