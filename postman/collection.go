@@ -6,6 +6,12 @@ type Collection struct {
 	Requests    []Request
 	Folders     []Folder
 	Structures  []StructureDefinition
+	Auth        *Auth
+}
+
+type Auth struct {
+	Type   string
+	Params []KeyValuePair
 }
 
 type OriginalRequest struct {
@@ -15,6 +21,7 @@ type OriginalRequest struct {
 	PayloadRaw    string
 	PayloadParams []KeyValuePair
 	Headers       []KeyValuePair
+	Auth          *Auth
 }
 
 type Request struct {
@@ -43,6 +50,7 @@ type Folder struct {
 	Description string
 	Folders     []Folder
 	Requests    []Request
+	Auth        *Auth
 }
 
 type StructureDefinition struct {

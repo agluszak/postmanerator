@@ -23,12 +23,18 @@ func (p *CollectionV210Parser) Parse(contents []byte, options BuilderOptions) (C
 }
 
 func (p *CollectionV210Parser) buildCollection(src collectionV210, options BuilderOptions) (Collection, error) {
+
+	auth, err := p.parseAuth(src.Auth)
+	if err != nil {
+		return Collection{}, err
+	}
 	collection := Collection{
 		Name:        src.Info.Name,
 		Description: src.Info.Description,
 		Requests:    make([]Request, 0),
 		Folders:     make([]Folder, 0),
 		Structures:  make([]StructureDefinition, 0),
+		Auth:        auth,
 	}
 
 	rootItem := Folder{}
@@ -42,7 +48,38 @@ func (p *CollectionV210Parser) buildCollection(src collectionV210, options Build
 	return collection, nil
 }
 
-func (p *CollectionV210Parser) parseOriginalRequest(request *collectionV210Request, options BuilderOptions) OriginalRequest {
+func (p *CollectionV210Parser) parseAuth(auth *collectionV210Auth) (*Auth, error) {
+	if auth == nil {
+		return nil, nil
+	}
+
+	params := make([]KeyValuePair, 0)
+	for _, pair := range auth.Bearer {
+		params = append(params, KeyValuePair{
+			Name:  pair.Key,
+			Key:   pair.Key,
+			Value: pair.Value,
+		})
+	}
+
+	ret := Auth{
+		Type:   auth.Type,
+		Params: params,
+	}
+
+	switch auth.Type {
+	case "bearer":
+		if len(auth.Bearer) != 1 || auth.Bearer[0].Key != "token" {
+			return nil, fmt.Errorf("incorrect auth structure for type: %v", auth.Type)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported auth type: %v", auth.Type)
+	}
+
+	return &ret, nil
+}
+
+func (p *CollectionV210Parser) parseOriginalRequest(request *collectionV210Request, options BuilderOptions, parentAuth *Auth) OriginalRequest {
 	return OriginalRequest{
 		Method:        request.Method,
 		URL:           request.Url.Raw,
@@ -50,37 +87,50 @@ func (p *CollectionV210Parser) parseOriginalRequest(request *collectionV210Reque
 		PayloadRaw:    request.Body.Raw,
 		PayloadParams: p.parseRequestPayloadParams(*request),
 		Headers:       p.parseRequestHeaders(request.Header, options),
+		Auth:          parentAuth,
 	}
 }
 
 func (p *CollectionV210Parser) computeItem(parentFolder *Folder, items []collectionV210Item, options BuilderOptions) error {
 	for _, item := range items {
+		auth, err := p.parseAuth(item.Auth)
+		if err != nil {
+			return err
+		}
 		if item.Request == nil { // item is a folder
 			folder := Folder{
 				ID:          uuid.NewV4().String(),
 				Description: item.Description,
 				Name:        item.Name,
+				Auth:        auth,
 			}
 			if err := p.computeItem(&folder, item.Item, options); err != nil {
 				return err
 			}
 			parentFolder.Folders = append(parentFolder.Folders, folder)
 		} else { // item is a request
+			var thisAuth *Auth
+			if auth != nil {
+				thisAuth = auth
+			} else {
+				thisAuth = parentFolder.Auth
+			}
 			request := Request{
-				OriginalRequest: OriginalRequest {
+				OriginalRequest: OriginalRequest{
 					Method:        item.Request.Method,
 					URL:           item.Request.Url.Raw,
 					PayloadType:   item.Request.Body.Mode,
 					PayloadRaw:    item.Request.Body.Raw,
 					PayloadParams: p.parseRequestPayloadParams(*item.Request),
 					Headers:       p.parseRequestHeaders(item.Request.Header, options),
+					Auth:          thisAuth,
 				},
 				ID:            uuid.NewV4().String(),
 				Name:          item.Name,
 				Description:   item.Request.Description,
 				Tests:         p.parseRequestTests(item),
 				PathVariables: p.parseRequestPathVariables(item),
-				Responses:     p.parseRequestResponses(item.Response, options),
+				Responses:     p.parseRequestResponses(item.Response, options, thisAuth),
 			}
 			parentFolder.Requests = append(parentFolder.Requests, request)
 		}
@@ -154,7 +204,7 @@ func (p *CollectionV210Parser) parseRequestHeaders(headers []collectionV210KeyVa
 	return parsedHeaders
 }
 
-func (p *CollectionV210Parser) parseRequestResponses(responses []collectionV210Response, options BuilderOptions) []Response {
+func (p *CollectionV210Parser) parseRequestResponses(responses []collectionV210Response, options BuilderOptions, parentAuth *Auth) []Response {
 	parsedResponses := make([]Response, 0)
 
 	for _, resp := range responses {
@@ -165,7 +215,7 @@ func (p *CollectionV210Parser) parseRequestResponses(responses []collectionV210R
 			Status:          resp.Status,
 			StatusCode:      resp.Code,
 			Headers:         p.parseResponseHeaders(resp.Header, options),
-			OriginalRequest: p.parseOriginalRequest(resp.OriginalRequest, options),
+			OriginalRequest: p.parseOriginalRequest(resp.OriginalRequest, options, parentAuth),
 		})
 	}
 

@@ -8,9 +8,9 @@ import (
 	"github.com/aubm/postmanerator/postman"
 )
 
-func curlSnippet(request postman.OriginalRequest) string {
+func curlSnippet(request postman.OriginalRequest) (string, error) {
 	var curlSnippet string
-	payloadReady, _ := regexp.Compile("POST|PUT|PATCH|DELETE")
+	payloadReady := regexp.MustCompile("POST|PUT|PATCH|DELETE")
 	curlSnippet += fmt.Sprintf("curl -X %v", request.Method)
 
 	if payloadReady.MatchString(request.Method) {
@@ -23,6 +23,14 @@ func curlSnippet(request postman.OriginalRequest) string {
 
 	for _, header := range request.Headers {
 		curlSnippet += fmt.Sprintf(` -H "%v: %v"`, header.Name, header.Value)
+	}
+
+	if request.Auth != nil {
+		authHeader, err := helperAuthHeader(*request.Auth)
+		if err != nil {
+			return  curlSnippet, err
+		}
+		curlSnippet += fmt.Sprintf(` -H "%v"`, authHeader)
 	}
 
 	if payloadReady.MatchString(request.Method) {
@@ -44,5 +52,5 @@ func curlSnippet(request postman.OriginalRequest) string {
 	}
 
 	curlSnippet += fmt.Sprintf(` "%v"`, request.URL)
-	return curlSnippet
+	return curlSnippet, nil
 }

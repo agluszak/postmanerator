@@ -9,10 +9,9 @@ import (
 	"github.com/aubm/postmanerator/postman"
 )
 
-func helperHttpSnippet(request postman.OriginalRequest) (httpSnippet string) {
+func helperHttpSnippet(request postman.OriginalRequest) (httpSnippet string, err error) {
 	parsedURL, err := parsedURL(request.URL)
 	if err != nil {
-		httpSnippet = err.Error()
 		return
 	}
 
@@ -21,6 +20,15 @@ Host: %v`, request.Method, parsedURL.RequestURI(), parsedURL.Host)
 
 	for _, header := range request.Headers {
 		httpSnippet += fmt.Sprintf("\n%v: %v", header.Name, header.Value)
+	}
+
+	if request.Auth != nil {
+		authHeader, errTemp := helperAuthHeader(*request.Auth)
+		err = errTemp // huh, that's ugly
+		if err != nil {
+			return
+		}
+		httpSnippet += "\n" + authHeader
 	}
 
 	if ok, _ := regexp.MatchString("POST|PUT|PATCH|DELETE", request.Method); ok == false {

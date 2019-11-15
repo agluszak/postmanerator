@@ -7,6 +7,12 @@ type collectionV210 struct {
 		Schema      string `json:"schema"`
 	} `json:"info"`
 	Item []collectionV210Item `json:"item"`
+	Auth *collectionV210Auth  `json:"auth,omitempty"`
+}
+
+type collectionV210Auth struct {
+	Type   string                       `json:"type"`
+	Bearer []collectionV210KeyValuePair `json:"bearer"`
 }
 
 type collectionV210Request struct {
@@ -23,6 +29,7 @@ type collectionV210Request struct {
 		Variable []collectionV210KeyValuePair `json:"variable"`
 	} `json:"url"`
 	Description string `json:"description"`
+	Auth        *Auth  `json:"auth,omitempty"`
 }
 
 type collectionV210Response struct {
@@ -31,16 +38,17 @@ type collectionV210Response struct {
 	Code            int                          `json:"code"`
 	Header          []collectionV210KeyValuePair `json:"header"`
 	Body            string                       `json:"body"`
-	OriginalRequest *collectionV210Request       `json:"originalRequest"`
+	OriginalRequest *collectionV210Request       `json:"originalRequest,omitempty"`
 }
 
 type collectionV210Item struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Event       []collectionV210Event  `json:"event"`
-	Item        []collectionV210Item   `json:"item"`
-	Request     *collectionV210Request `json:"request,omitempty"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	Event       []collectionV210Event    `json:"event"`
+	Item        []collectionV210Item     `json:"item"`
+	Request     *collectionV210Request   `json:"request,omitempty"`
 	Response    []collectionV210Response `json:"response"`
+	Auth        *collectionV210Auth      `json:"auth,omitempty"`
 }
 
 type collectionV210Event struct {
